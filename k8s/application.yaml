@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aro-test-app
+spec:
+  destination:
+    namespace: argo-test
+    server: https://kubernetes.default.svc
+  source:
+    path: k8s
+    repoURL: https://github.com/benjoe1126/cd.git
+    targetRevision: HEAD
+  sources: []
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true

@@ -123,7 +123,7 @@ spec:
     spec:
       containers:
         - name: argo-test-app1
-          image: szefoka/argo-test-app1:{{ .Values.env.APP_VERSION }}
+          image: benjoe1126/argo-test-app1:{{ .Values.env.APP_VERSION }}
           ports:
             - name: http
               containerPort: 5000
@@ -224,5 +224,37 @@ Ezt a következő committal javítottam, a values.yaml tartalma pedig
 env:
   APP_VERSION: somehashdoesentmatterwillgetreplacedanywaynotevenahash
 ```
+**FONTOS**: a workflow alapvetően NEM fog tudni pusholni a repositoryba, ehhez a GITHUB_TOKEN-nek kell írási jogot adni a következő felületen
+![](permissions.png)
+Látható, hogy ezt követően a job sikeresen lefutott
+![](succ.png)
+![](commited.png)
+Az utolsó commit már az actioné.  
+Utolsó lépésként pedig létrehozom az argocd applicationt, a reprodukálhatóság kedvéért egy application.yaml manifestbe, melyen a tartalma a kvöetkező
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aro-test-app
+spec:
+  destination:
+    namespace: argo-test
+    server: https://kubernetes.default.svc
+  source:
+    path: k8s
+    repoURL: https://github.com/benjoe1126/cd.git
+    targetRevision: HEAD
+  sources: []
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+```
+Ezt utána `kubectl apply -f k8s/application.yaml` paranccsal ki is telepíthetjük.  
+Az eredménye argoban
+![](argout.png)
 
 
