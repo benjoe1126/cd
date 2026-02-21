@@ -17,12 +17,12 @@ git push -u origin master # ez beállítja az upstreamet és feltölti a commitu
 # nekem ezután kell egy passphrase, mivel ssh kulccsal autentikálok a githubhoz, amimen meg van passphrase
 ```
 Az alábbi képen látható a parancsok kimenete (a github repo), valamint egy zeneklipp
-![](repo.png)
+![](res/repo.png)
 
 ## ArgoCD telepítése minikube-ra
 Az első lépés a minikube elindítása, az asztali gépemen docker drivert használok és a `minikube start --driver=docker` paranccsal indítom  
 A parancs kimenete:
-![](mkstart.png)
+![](res/mkstart.png)
 A következő lépés az argocd telepítése.
 Ehhez a parancsok
 ```bash
@@ -34,14 +34,14 @@ kubectl port-forward -n argocd svc/argocd-server 8080:443 # forwardoljuk az argo
 }}'
 ```
 Az argocd telepítés kimenete
-![](argoinstall.png)
+![](res/argoinstall.png)
 Látható, hogy a kellő CRD-k (application, applicationset, stb.) telepítésre kerültek, ezen felül a szükséges deploymentek és servicek is létrejöttek  
 Ezt követően a `kubectl port-forward ...` parancsot adtam ki, aminek az eredménye
-![](portforward.png)
+![](res/portforward.png)
 Az argocd login felülete port-forwardon keresztül elérve
-![](argoyeah.png)
+![](res/argoyeah.png)
 Majd az argoba belépve
-![](postlogin.png)
+![](res/postlogin.png)
 
 ## Tesztalkalmazás telepítése
 Adjuk ki az `uv init .` parancsot, ez a függőségek kezeléséhez jól fog jönni, majd telepítsük a függőségeket
@@ -214,10 +214,10 @@ jobs:
 Érdemes megnézni, hogy az action tartalmaz olyan sorokat (pl. `${{ secrets.DOCKER_KEY }}`) ahol a secrets context variable van meghivatkozva.  
 Ezt a github action betölti minden futásnál, a tartalma pedig esetemben https://github.com/benjoe1126/cd/settings/secrets/actions oldalon beállított értékekből jön, ezeket fel is veszem  (miután csináltam dockerhubon egy pat-ot rw jogokkal, hiszen az image feltöltéséhez kell, hogy tudjon írni)  
 A létrehozott secretek
-![](secret.png)
+![](res/secret.png)
 Ezt követően egy `git commit` és `git push` után már láthatjuk is, ahogy a job feltölti az imaget dockerhubra.
-![](pushverygood.png)
-![](pushgood.png)
+![](res/pushverygood.png)
+![](res/pushgood.png)
 Látható, hogy a push megtörtént, az utolsó stage viszont elbukott, mivel elfelejtettem a valuesba bármit is írni, így nem történt change és a git commit nem 0-val tért vissza.  
 Ezt a következő committal javítottam, a values.yaml tartalma pedig
 ```yaml
@@ -225,10 +225,10 @@ env:
   APP_VERSION: somehashdoesentmatterwillgetreplacedanywaynotevenahash
 ```
 **FONTOS**: a workflow alapvetően NEM fog tudni pusholni a repositoryba, ehhez a GITHUB_TOKEN-nek kell írási jogot adni a következő felületen
-![](permissions.png)
+![](res/permissions.png)
 Látható, hogy ezt követően a job sikeresen lefutott
-![](succ.png)
-![](commited.png)
+![](res/succ.png)
+![](res/commited.png)
 Az utolsó commit már az actioné.  
 Utolsó lépésként pedig létrehozom az argocd applicationt, a reprodukálhatóság kedvéért egy application.yaml manifestbe, melyen a tartalma a kvöetkező
 ```yaml
@@ -255,9 +255,9 @@ spec:
 ```
 Ezt utána `kubectl apply -f k8s/application.yaml` paranccsal ki is telepíthetjük.  
 Az eredménye argoban
-![](argout.png)
-![](nobackoff.png)
+![](res/argout.png)
+![](res/nobackoff.png)
 A clusterben is megnézhető az eredménye
-![](k9.png)
+![](res/k9.png)
 Teszteléshez pedig egy `kubectl port-forward -n argo-test 5000:5000` paranccsal ki portforwardolom, majd böngészőből megnéztem, kapok e választ.  
-![](hello.png)
+![](res/hello.png)
