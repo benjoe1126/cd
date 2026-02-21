@@ -216,4 +216,13 @@ Ezt a github action betölti minden futásnál, a tartalma pedig esetemben https
 A létrehozott secretek
 ![](secret.png)
 Ezt követően egy `git commit` és `git push` után már láthatjuk is, ahogy a job feltölti az imaget dockerhubra.
+![](pushverygood.png)
+![](pushgood.png)
+Látható, hogy a push megtörtént, az utolsó stage viszont elbukott, mivel elfelejtettem a valuesba bármit is írni, így nem történt change és a git commit nem 0-val tért vissza.  
+Ezt a következő committal javítottam, a values.yaml tartalma pedig
+```yaml
+env:
+  APP_VERSION: somehashdoesentmatterwillgetreplacedanywaynotevenahash
+```
+
 
