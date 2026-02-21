@@ -13,8 +13,11 @@ git init
 git remote add origin git@github.com:benjoe1126/cd.git
 git add .
 git commit -m "initial"
-git push -u origin main # ez beállítja az upstreamet és feltölti a commitunkat
+git push -u origin master # ez beállítja az upstreamet és feltölti a commitunkat
+# nekem ezután kell egy passphrase, mivel ssh kulccsal autentikálok a githubhoz, amimen meg van passphrase
 ```
+Az alábbi képen látható a parancsok kimenete (a github repo), valamint egy zeneklipp
+![](repo.png)
 
 ## ArgoCD telepítése minikube-ra
 Az első lépés a minikube elindítása, az asztali gépemen docker drivert használok és a `minikube start --driver=docker` paranccsal indítom  
@@ -68,7 +71,7 @@ COPY pyproject.toml .
 RUN pip install uv
 RUN uv sync
 ENV PYTHONUNBUFFERED=1
-ENTRYPOINT ["uv", "run", "app/app.py"]
+ENTRYPOINT ["uv", "run", "app.py"]
 ```
 A következő lépés egy helm chart létrehozása  
 Ehhez a következő parancsokat adtam ki a repo gyökerében
@@ -164,5 +167,53 @@ A helm chartot ezúttal nem `helm upgrade --install`-lal rakom ki, hiszen a telp
 ## Github action létrehozása
 A repo gyökerébe létrehozok egy .github/workflows mappát, amiben létrehozok egy cd.yaml nevű fájlt a következő tartalommal
 ```yaml
+name: CD
 
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKERHUB_KEY: ${{ secrets.DOCKER_KEY }}
+  IMAGE_NAME: argo-test-app1
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_KEY }}
+
+      - name: Build Docker image
+        run: docker build -t ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+
+      - name: Push Docker image
+        run: docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Update values.yaml
+        run: |
+          cd helm
+          sed -i 's|APP_VERSION:.*|APP_VERSION: '${{ github.sha }}'|' values.yaml 
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add values.yaml
+          git commit -m "Update values.yaml"
+          git push
 ```
+Érdemes megnézni, hogy az action tartalmaz olyan sorokat (pl. `${{ secrets.DOCKER_KEY }}`) ahol a secrets context variable van meghivatkozva.  
+Ezt a github action betölti minden futásnál, a tartalma pedig esetemben https://github.com/benjoe1126/cd/settings/secrets/actions oldalon beállított értékekből jön, ezeket fel is veszem  (miután csináltam dockerhubon egy pat-ot rw jogokkal, hiszen az image feltöltéséhez kell, hogy tudjon írni)  
+A létrehozott secretek
+![](secret.png)
+Ezt követően egy `git commit` és `git push` után már láthatjuk is, ahogy a job feltölti az imaget dockerhubra.
+

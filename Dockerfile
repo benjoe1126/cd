@@ -5,4 +5,4 @@ COPY pyproject.toml .
 RUN pip install uv
 RUN uv sync
 ENV PYTHONUNBUFFERED=1
-ENTRYPOINT ["uv", "run", "app/app.py"]
+ENTRYPOINT ["uv", "run", "app.py"]
